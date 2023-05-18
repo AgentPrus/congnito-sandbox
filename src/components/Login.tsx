@@ -12,15 +12,15 @@ import {
 import { FormEvent, useState } from "react";
 import { useAuth } from "../context/Auth";
 
-const SignUp = () => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { signUp } = useAuth();
+  const { authenticate } = useAuth();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    signUp(email, password);
+    authenticate(email, password);
   };
 
   return (
@@ -32,7 +32,7 @@ const SignUp = () => {
     >
       <Stack spacing={8} mx={"auto"} maxW={"lg"} py={12} px={6}>
         <Stack align={"center"}>
-          <Heading fontSize={"4xl"}>Sign up</Heading>
+          <Heading fontSize={"4xl"}>Login</Heading>
         </Stack>
         <Box
           rounded={"lg"}
@@ -42,14 +42,14 @@ const SignUp = () => {
         >
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              <FormControl id="email" isRequired>
+              <FormControl id="email">
                 <FormLabel>Email address</FormLabel>
                 <Input
                   type="email"
                   onChange={(event) => setEmail(event.target.value)}
                 />
               </FormControl>
-              <FormControl id="password" isRequired>
+              <FormControl id="password">
                 <FormLabel>Password</FormLabel>
                 <Input
                   type="password"
@@ -65,7 +65,7 @@ const SignUp = () => {
                   }}
                   type="submit"
                 >
-                  Sign up
+                  Login
                 </Button>
               </Stack>
             </Stack>
@@ -76,4 +76,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default Login;

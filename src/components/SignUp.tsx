@@ -10,15 +10,17 @@ import {
   Button,
 } from "@chakra-ui/react";
 import { FormEvent, useState } from "react";
+import { useAuth } from "../context/Auth";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { signUp } = useAuth();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    console.log(email, password);
+    signUp(email, password);
   };
 
   return (
@@ -40,14 +42,14 @@ const SignUp = () => {
         >
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              <FormControl id="email">
+              <FormControl id="email" isRequired>
                 <FormLabel>Email address</FormLabel>
                 <Input
                   type="email"
                   onChange={(event) => setEmail(event.target.value)}
                 />
               </FormControl>
-              <FormControl id="password">
+              <FormControl id="password" isRequired>
                 <FormLabel>Password</FormLabel>
                 <Input
                   type="password"

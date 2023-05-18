@@ -65,7 +65,7 @@ const SignUp = () => {
                   }}
                   type="submit"
                 >
-                  Sign in
+                  Sign up
                 </Button>
               </Stack>
             </Stack>

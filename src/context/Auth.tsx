@@ -1,4 +1,9 @@
-import { CognitoUser, CognitoUserAttribute } from "amazon-cognito-identity-js";
+import {
+  AuthenticationDetails,
+  CognitoUser,
+  CognitoUserAttribute,
+  CognitoUserSession,
+} from "amazon-cognito-identity-js";
 import {
   ReactNode,
   createContext,
@@ -13,6 +18,7 @@ import { useToast } from "@chakra-ui/react";
 
 type State = {
   signUp: (email: string, password: string) => void;
+  authenticate: (Username: string, Password: string) => Promise<void>;
   user: CognitoUser | null;
 };
 
@@ -30,6 +36,7 @@ const useAuth = () => {
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const toast = useToast();
   const [user, setUser] = useState<State["user"]>(null);
+  const [session, setSession] = useState<CognitoUserSession | null>(null);
 
   const signUp = useCallback(
     (email: string, password: string) => {
@@ -64,7 +71,42 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     [toast]
   );
 
-  const values = useMemo(() => ({ user, signUp }), [user, signUp]);
+  const authenticate = useCallback(
+    async (Username: string, Password: string) => {
+      const user = new CognitoUser({
+        Username,
+        Pool: UserPool,
+      });
+
+      const authDetails = new AuthenticationDetails({
+        Username,
+        Password,
+      });
+
+      user.authenticateUser(authDetails, {
+        onSuccess: (data) => {
+          console.log(data);
+
+          setSession(data);
+        },
+        onFailure: (error) => {
+          if (error) {
+            toast({
+              title: error.message,
+              status: "error",
+              isClosable: true,
+            });
+          }
+        },
+      });
+    },
+    [toast]
+  );
+
+  const values = useMemo(
+    () => ({ user, signUp, authenticate }),
+    [user, signUp, authenticate]
+  );
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
 };

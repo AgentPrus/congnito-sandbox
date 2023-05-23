@@ -19,7 +19,11 @@ import { useToast } from "@chakra-ui/react";
 type State = {
   signUp: (email: string, password: string) => void;
   authenticate: (Username: string, Password: string) => Promise<void>;
-  user: CognitoUser | null;
+  getSession: () => Promise<{
+    session: CognitoUserSession;
+    attributes: { [key: string]: string };
+  }>;
+  session: CognitoUserSession | null;
 };
 
 const AuthContext = createContext<State | undefined>(undefined);
@@ -35,8 +39,7 @@ const useAuth = () => {
 
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const toast = useToast();
-  const [user, setUser] = useState<State["user"]>(null);
-  const [session, setSession] = useState<CognitoUserSession | null>(null);
+  const [session, setSession] = useState<State["session"]>(null);
 
   const signUp = useCallback(
     (email: string, password: string) => {
@@ -63,7 +66,6 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
               status: "success",
               isClosable: true,
             });
-            setUser(data.user);
           }
         }
       );
@@ -85,8 +87,6 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       user.authenticateUser(authDetails, {
         onSuccess: (data) => {
-          console.log(data);
-
           setSession(data);
         },
         onFailure: (error) => {
@@ -103,9 +103,54 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     [toast]
   );
 
+  const getSession: State["getSession"] = useCallback(async () => {
+    return new Promise((resolve, reject) => {
+      const userSession = UserPool.getCurrentUser();
+
+      if (userSession) {
+        userSession.getSession(
+          async (error: unknown, session: CognitoUserSession) => {
+            if (error) {
+              console.error(error);
+            } else {
+              const attributes: { [key: string]: string } = await new Promise(
+                (resolve, reject) => {
+                  userSession.getUserAttributes((error, attributes) => {
+                    if (error) {
+                      reject(error);
+                    } else {
+                      const results: { [key: string]: string } = {};
+
+                      if (attributes)
+                        for (const attribute of attributes) {
+                          const { Name, Value } = attribute;
+                          results[Name] = Value;
+                        }
+
+                      resolve(results);
+                    }
+                  });
+                }
+              );
+
+              const value = {
+                session,
+                attributes: attributes,
+              };
+
+              resolve(value);
+            }
+          }
+        );
+      } else {
+        reject();
+      }
+    });
+  }, []);
+
   const values = useMemo(
-    () => ({ user, signUp, authenticate }),
-    [user, signUp, authenticate]
+    () => ({ session, signUp, authenticate, getSession }),
+    [session, signUp, authenticate, getSession]
   );
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;

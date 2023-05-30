@@ -23,6 +23,7 @@ type State = {
     session: CognitoUserSession;
     attributes: { [key: string]: string };
   }>;
+  logout: () => void;
   session: CognitoUserSession | null;
 };
 
@@ -148,9 +149,17 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const logout = useCallback(() => {
+    const user = UserPool.getCurrentUser();
+    if (user) {
+      user.signOut();
+      setSession(null);
+    }
+  }, []);
+
   const values = useMemo(
-    () => ({ session, signUp, authenticate, getSession }),
-    [session, signUp, authenticate, getSession]
+    () => ({ session, signUp, authenticate, getSession, logout }),
+    [session, signUp, authenticate, getSession, logout]
   );
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;

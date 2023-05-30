@@ -12,7 +12,7 @@ import {
 import { useAuth } from "../context/Auth";
 
 const Account = () => {
-  const { getSession } = useAuth();
+  const { getSession, logout } = useAuth();
 
   const [profile, setProfile] = useState<{
     username: string;
@@ -59,7 +59,6 @@ const Account = () => {
             type="text"
             disabled
             value={profile?.username}
-            defaultValue={""}
           />
         </FormControl>
         <FormControl id="email">
@@ -70,7 +69,6 @@ const Account = () => {
             type="email"
             disabled
             value={profile?.email}
-            defaultValue={""}
           />
         </FormControl>
         <Stack spacing={6} direction={["column", "row"]}>
@@ -81,6 +79,7 @@ const Account = () => {
             _hover={{
               bg: "red.500",
             }}
+            onClick={logout}
           >
             Logout
           </Button>

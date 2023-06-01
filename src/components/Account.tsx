@@ -1,91 +1,33 @@
-import { useEffect, useState } from "react";
 import {
-  Button,
-  Flex,
-  FormControl,
-  FormLabel,
-  Heading,
-  Input,
-  Stack,
-  useColorModeValue,
+  AbsoluteCenter,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
 } from "@chakra-ui/react";
-import { useAuth } from "../context/Auth";
+import Profile from "./Forms/Profile";
+import ChangePassword from "./Forms/ChangePassword";
 
 const Account = () => {
-  const { getSession, logout } = useAuth();
-
-  const [profile, setProfile] = useState<{
-    username: string;
-    email: string;
-  } | null>({
-    username: "",
-    email: "",
-  });
-
-  useEffect(() => {
-    getSession().then((data) => {
-      setProfile({
-        username: data.attributes.name,
-        email: data.attributes.email,
-      });
-    });
-  }, [getSession]);
-
   return (
-    <Flex
-      minH={"100vh"}
-      align={"center"}
-      justify={"center"}
-      bg={useColorModeValue("gray.50", "gray.800")}
-    >
-      <Stack
-        spacing={4}
-        w={"full"}
-        maxW={"md"}
-        bg={useColorModeValue("white", "gray.700")}
-        rounded={"xl"}
-        boxShadow={"lg"}
-        p={6}
-        my={12}
-      >
-        <Heading lineHeight={1.1} fontSize={{ base: "2xl", sm: "3xl" }}>
-          User Profile
-        </Heading>
-        <FormControl id="userName">
-          <FormLabel>User name</FormLabel>
-          <Input
-            placeholder="UserName"
-            _placeholder={{ color: "gray.500" }}
-            type="text"
-            disabled
-            value={profile?.username}
-          />
-        </FormControl>
-        <FormControl id="email">
-          <FormLabel>Email address</FormLabel>
-          <Input
-            placeholder="your-email@example.com"
-            _placeholder={{ color: "gray.500" }}
-            type="email"
-            disabled
-            value={profile?.email}
-          />
-        </FormControl>
-        <Stack spacing={6} direction={["column", "row"]}>
-          <Button
-            bg={"red.400"}
-            color={"white"}
-            w="full"
-            _hover={{
-              bg: "red.500",
-            }}
-            onClick={logout}
-          >
-            Logout
-          </Button>
-        </Stack>
-      </Stack>
-    </Flex>
+    <AbsoluteCenter>
+      <Tabs>
+        <TabList>
+          <Tab>Profile</Tab>
+          <Tab>Change Password</Tab>
+          <Tab>Change Email</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel>
+            <Profile />
+          </TabPanel>
+          <TabPanel>
+            <ChangePassword />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+    </AbsoluteCenter>
   );
 };
 

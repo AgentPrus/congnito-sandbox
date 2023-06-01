@@ -23,8 +23,15 @@ type State = {
     session: CognitoUserSession;
     attributes: { [key: string]: string };
   }>;
+  changeUserPassword: ({
+    password,
+    newPassword,
+  }: {
+    password: string;
+    newPassword: string;
+  }) => void;
   logout: () => void;
-  session: CognitoUserSession | null;
+  user: CognitoUser | null;
 };
 
 const AuthContext = createContext<State | undefined>(undefined);
@@ -40,7 +47,7 @@ const useAuth = () => {
 
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const toast = useToast();
-  const [session, setSession] = useState<State["session"]>(null);
+  const [user, setUser] = useState<State["user"]>(null);
 
   const signUp = useCallback(
     (email: string, password: string) => {
@@ -87,8 +94,8 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       user.authenticateUser(authDetails, {
-        onSuccess: (data) => {
-          setSession(data);
+        onSuccess: () => {
+          setUser(user);
         },
         onFailure: (error) => {
           if (error) {
@@ -106,60 +113,85 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const getSession: State["getSession"] = useCallback(async () => {
     return new Promise((resolve, reject) => {
-      const userSession = UserPool.getCurrentUser();
+      if (user) {
+        user.getSession(async (error: unknown, session: CognitoUserSession) => {
+          if (error) {
+            console.error(error);
+          } else {
+            const attributes: { [key: string]: string } = await new Promise(
+              (resolve, reject) => {
+                user.getUserAttributes((error, attributes) => {
+                  if (error) {
+                    reject(error);
+                  } else {
+                    const results: { [key: string]: string } = {};
 
-      if (userSession) {
-        userSession.getSession(
-          async (error: unknown, session: CognitoUserSession) => {
-            if (error) {
-              console.error(error);
-            } else {
-              const attributes: { [key: string]: string } = await new Promise(
-                (resolve, reject) => {
-                  userSession.getUserAttributes((error, attributes) => {
-                    if (error) {
-                      reject(error);
-                    } else {
-                      const results: { [key: string]: string } = {};
+                    if (attributes)
+                      for (const attribute of attributes) {
+                        const { Name, Value } = attribute;
+                        results[Name] = Value;
+                      }
 
-                      if (attributes)
-                        for (const attribute of attributes) {
-                          const { Name, Value } = attribute;
-                          results[Name] = Value;
-                        }
+                    resolve(results);
+                  }
+                });
+              }
+            );
 
-                      resolve(results);
-                    }
-                  });
-                }
-              );
+            const value = {
+              session,
+              attributes: attributes,
+            };
 
-              const value = {
-                session,
-                attributes: attributes,
-              };
-
-              resolve(value);
-            }
+            resolve(value);
           }
-        );
+        });
       } else {
         reject();
       }
     });
-  }, []);
+  }, [user]);
+
+  const changeUserPassword = useCallback(
+    ({ password, newPassword }: { password: string; newPassword: string }) => {
+      if (user) {
+        user.changePassword(password, newPassword, (error, result) => {
+          if (error) {
+            toast({
+              title: error.message,
+              status: "error",
+              isClosable: true,
+            });
+          } else if (result) {
+            toast({
+              title: result,
+              status: "success",
+              isClosable: true,
+            });
+          }
+        });
+      }
+    },
+    [user, toast]
+  );
 
   const logout = useCallback(() => {
-    const user = UserPool.getCurrentUser();
     if (user) {
       user.signOut();
-      setSession(null);
+      setUser(null);
     }
-  }, []);
+  }, [user]);
 
   const values = useMemo(
-    () => ({ session, signUp, authenticate, getSession, logout }),
-    [session, signUp, authenticate, getSession, logout]
+    () => ({
+      user,
+      signUp,
+      authenticate,
+      getSession,
+      changeUserPassword,
+      logout,
+    }),
+    [user, signUp, authenticate, getSession, changeUserPassword, logout]
   );
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
